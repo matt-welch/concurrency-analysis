@@ -2,41 +2,35 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-
 using System.Threading.Tasks;
+
 using System.Threading;
 using System.Diagnostics;
 
+
 namespace ConcucrrencyTiming
 {
-    class SemaphoreTest
+    class MutexTest
     {
-        /* This class is trying to determine the cost of semaphores in a software system.
-         * If they're not used, the costs include potential for deadlock and race conditions.
-         * When they are used, the costs include slower operation and reduced performance, but 
-         * these come with the benefit of CORRECT programs.  
-         * 
-         */
+        /* This class is trying to determine the cost of mutex in a software system. */
         static Thread[] threads;
         static int _numThreads;
-        static Semaphore sem;
-        static Semaphore exitDataMutex;
+        static Mutex mutex;
+        static Mutex exitDataMutex;
         int _initSemCount;
         int _maxSemCount;
         public static List<long> enterData;
         public static List<long> exitData;
 
-        public SemaphoreTest(int numThreads, int param_initialCount, int param_maximumCount)
+        public MutexTest(int numThreads)
         {
             enterData = new List<long>();
             exitData = new List<long>();
 
             _numThreads = Math.Min(numThreads, 100);
-            _initSemCount = param_initialCount;
-            _maxSemCount = param_maximumCount;
             threads = new Thread[_numThreads];
-            sem = new Semaphore(_initSemCount, _maxSemCount);
-            exitDataMutex = new Semaphore(1, 1);
+            mutex = new Mutex();
+            exitDataMutex = new Mutex();
         }
 
         public void run(int numThreads)
@@ -46,12 +40,12 @@ namespace ConcucrrencyTiming
         }
         public void runReps(int numReps, int maxThreads)
         {
-            Console.WriteLine("\nBeginning Semaphore Timing Test ({0} reps, max {1} threads",
-               numReps, maxThreads);
+            Console.WriteLine("\nBeginning Mutex Timing Test ({0} reps, max {1} threads",
+                numReps, maxThreads);    
             for (int j = 1; j <= maxThreads; j++)
             {
                 _numThreads = j;
-                Console.WriteLine("\nSemaphore test with {0} threads ({1} reps): ", j, numReps);
+                Console.WriteLine("\nMutex test with {0} threads ({1} reps): ", j, numReps);
                 
                 enterData = new List<long>();
                 exitData = new List<long>();
@@ -61,14 +55,14 @@ namespace ConcucrrencyTiming
                 }
 
                 string datafileExtension = ".txt";
-                string filename = "SemEnter_T" + String.Format("{0:00}", _numThreads) + datafileExtension; 
+                string filename = "MutexEnter_T" + String.Format("{0:00}", _numThreads) + datafileExtension; 
                 FileWriter writer = new FileWriter(filename, enterData);
-                filename = "SemExit_T" + String.Format("{0:00}", _numThreads) + datafileExtension;
+                filename = "MutexExit_T" + String.Format("{0:00}", _numThreads) + datafileExtension;
                 writer = new FileWriter(filename, exitData);
                 Stats enterStats = new Stats(enterData.ToArray());
-                Console.WriteLine("SemEnter_T{0:00}:\n\t{1}", _numThreads, enterStats.ToString());
+                Console.WriteLine("MutexEnter_T{0:00}:\n\t{1}", _numThreads, enterStats.ToString());
                 Stats exitStats = new Stats(exitData.ToArray());
-                Console.WriteLine("SemExit_T{0:00}:\n\t{1}", _numThreads, exitStats.ToString());
+                Console.WriteLine("MutexExit_T{0:00}:\n\t{1}", _numThreads, exitStats.ToString());
             }           
         }
 
@@ -91,21 +85,16 @@ namespace ConcucrrencyTiming
         {
             Stopwatch clock = new Stopwatch();
             
-            //Console.WriteLine("{0} is waiting in line...", Thread.CurrentThread.Name);
             clock.Start();
-            sem.WaitOne();
+            mutex.WaitOne();
             clock.Stop();
             enterData.Add(clock.ElapsedTicks);
-            //Console.WriteLine("{0} enters the semaphore test after {1} ticks", Thread.CurrentThread.Name, clock.ElapsedTicks);
-            //Console.WriteLine("{0} is leaving the semaphore test", Thread.CurrentThread.Name);
             clock.Restart();
-            sem.Release();
+            mutex.ReleaseMutex();
             clock.Stop();
             exitDataMutex.WaitOne();
             exitData.Add(clock.ElapsedTicks);
-            exitDataMutex.Release();
-            
-            //Console.WriteLine("{0} waited for {1} ticks", Thread.CurrentThread.Name, clock.ElapsedTicks);
+            exitDataMutex.ReleaseMutex();
         }
     }
 }

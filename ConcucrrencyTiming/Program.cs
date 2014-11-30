@@ -119,12 +119,12 @@ namespace ConcucrrencyTiming
             RWLTest rwlTest = new RWLTest(numIter);
 
             rwlTest.run();
-            SemaphoreTest semTest = new SemaphoreTest(10,3,3);
-            int numReps = 100; 
+            int numReps = 100;
             int maxThreads = 10;
-            Console.WriteLine("\nBeginning Semaphore Timing Test ({0} reps, max {1} threads",
-                numReps, maxThreads);
-            semTest.runReps(numReps, maxThreads);            
+            SemaphoreTest semTest = new SemaphoreTest(10, 3, 3);
+            semTest.runReps(numReps, maxThreads);
+            MutexTest mtxTest = new MutexTest(maxThreads);
+            mtxTest.runReps(numReps, maxThreads);
             Console.ReadKey();
                 
             clockCalibrationTest(numIter);
@@ -173,7 +173,7 @@ namespace ConcucrrencyTiming
 
         static void clockCalibrationTest(int numIter)
         {
-            Console.WriteLine("Beginning Clock Calibration..");
+            Console.WriteLine("\nBeginning Clock Calibration..");
             ConcurrencyTester syscal = new ConcurrencyTester(numIter);
             syscal.calibrateClock();
             Console.WriteLine();

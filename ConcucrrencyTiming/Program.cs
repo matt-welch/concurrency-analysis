@@ -110,19 +110,26 @@ namespace ConcucrrencyTiming
             Console.WriteLine("Concurrency utilities timing program:");
             
             int numIter = 20;
-            Console.Write("Enter the timing type {ms,ticks}: ");
-            timerUnits = Console.ReadLine();
-            if (timerUnits.Length == 0)
-                timerUnits = "ticks";
+            timerUnits = "ticks";
             
             Console.WriteLine();
+            clockOverheadTest();
+
             threadSpawnTest(1000);
             RWLTest rwlTest = new RWLTest(numIter);
+
             rwlTest.run();
             SemaphoreTest semTest = new SemaphoreTest(10,3,3);
-            semTest.run();
+            int numReps = 100; 
+            int maxThreads = 10;
+            Console.WriteLine("\nBeginning Semaphore Timing Test ({0} reps, max {1} threads",
+                numReps, maxThreads);
+            semTest.runReps(numReps, maxThreads);            
+            Console.ReadKey();
+                
             clockCalibrationTest(numIter);
             clockTest(numIter);
+            Console.ReadKey();
 
         }
 
@@ -198,6 +205,22 @@ namespace ConcucrrencyTiming
                 keepGoing = Console.ReadLine();
             } while (keepGoing.Length > 0);
             Console.WriteLine();
+        }
+
+        static void clockOverheadTest()
+        {
+            Console.WriteLine("Beginning Clock Overhead test: ");
+            resultsA = new List<long>();
+            int numReps = 100000;
+            for (int i = 0; i < numReps; i++)
+            {
+                sharedClock.Start();
+                sharedClock.Stop();
+                resultsA.Add(sharedClock.ElapsedTicks);
+                sharedClock.Reset();
+            }
+            Stats baselineClockStats = new Stats(resultsA.ToArray());
+            Console.WriteLine("Timing cost: {0}\n", baselineClockStats.ToString());
         }
     }
 }

@@ -15,7 +15,7 @@ namespace ConcucrrencyTiming
     {
         public static List<long> resultsRead;
         public static List<long> resultsWrite;
-        //public static List<long> resultsC;
+        //public static List<long> sharedStopResults;
         public static int readInt = 0;
         public static int writeInt = 0;
         static int readerTimeouts = 0;
@@ -53,7 +53,7 @@ namespace ConcucrrencyTiming
             }
             Thread.Sleep(1000);
 
-            // Tell the threads to shut down, then wait until they all 
+            // Tell the tws to shut down, then wait until they all 
             // finish.
             running = false;
             for (int i = 0; i < numThreads; i++)
@@ -109,7 +109,7 @@ namespace ConcucrrencyTiming
                 finally
                 {
                     // Ensure that the lock is released.
-
+                    //TODO timing
                     rwl.ReleaseReaderLock();
                 }
             }

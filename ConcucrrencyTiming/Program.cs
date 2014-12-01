@@ -15,7 +15,7 @@ using System.Threading.Tasks;
  *      Thread Creation & deletion
  *      Garbage Collection as a consequence of concurrency
  *      
- * Spawn threads and have them access shared data structures inside locks
+ * Spawn tws and have them access shared data structures inside locks
  * 
  * Libraries required: 
  *      Threads, System.Diagnostics (stopwatch), 
@@ -44,13 +44,16 @@ namespace ConcucrrencyTiming
 
         public void calibrateClock()
         {
-            int ms = 100;
+            int ms = 1000;
+            Console.WriteLine("\nBeginning Clock Calibration (sleep for {0} ms", ms);
             testClock("ticks", ms);
             Stats msStats = new Stats(resultsMs);
             Stats ticksStats = new Stats(resultsTicks);
             Console.WriteLine(msStats.ToString());
             Console.WriteLine(ticksStats.ToString());
             Console.WriteLine("Ticks/ms = {0:0.00}", ticksStats.sum / msStats.sum * 1000);
+            Console.WriteLine("Ticks/ns = {0:0.00}", ticksStats.sum / msStats.sum / 1000);
+            Console.WriteLine("ns/tick = {0:0.000}", msStats.sum / ticksStats.sum * 1000);
         }
 
         public Stats testClock(string type, int msSleep){
@@ -102,7 +105,7 @@ namespace ConcucrrencyTiming
         {
             // TODO: create shared data structures (objects, ints, computation)
             // TODO: Monitor
-            // TODO: spawn threads that all attempt to access the shared data structure
+            // TODO: spawn tws that all attempt to access the shared data structure
             /* TODO: collect timing data of each of the shared objects
              *      lock time, unlock time, thread spawn time, thread delete time
             */
@@ -115,22 +118,26 @@ namespace ConcucrrencyTiming
             Console.WriteLine();
             clockOverheadTest();
 
-            threadSpawnTest(1000);
+            ThreadTimingTest threadTest = new ThreadTimingTest();
+            threadTest.run(1000);
+
+            threadTest.runMultiStatefulThreads(10, 1000);
+
+            //threadSpawnTest(1000);
             RWLTest rwlTest = new RWLTest(numIter);
 
             rwlTest.run();
-            int numReps = 100;
+            int numReps = 1000;
             int maxThreads = 10;
             SemaphoreTest semTest = new SemaphoreTest(10, 3, 3);
             semTest.runReps(numReps, maxThreads);
             MutexTest mtxTest = new MutexTest(maxThreads);
             mtxTest.runReps(numReps, maxThreads);
-            Console.ReadKey();
                 
-            clockCalibrationTest(numIter);
-            clockTest(numIter);
-            Console.ReadKey();
+            clockCalibrationTest(100);
 
+            // clock test has a built-in readkey
+            clockTest(numIter);
         }
 
         static void threadSpawnTest(int iter)
@@ -154,8 +161,14 @@ namespace ConcucrrencyTiming
             }
             
             Stats spawnStats = new Stats(resultsA.ToArray());
+            string filename = "ThreadCreate.txt";
+            FileWriter writer = new FileWriter(filename, resultsA);
             Stats joinStats = new Stats(resultsB.ToArray());
+            filename = "ThreadSpawn.txt";
+            writer = new FileWriter(filename, resultsB); 
             Stats createStats = new Stats(resultsC.ToArray());
+            filename = "ThreadJoin.txt";
+            writer = new FileWriter(filename, resultsC); 
 
             Console.WriteLine("Thread Create(ticks):\n\t {0}", createStats.ToString());
             Console.WriteLine("Thread Spawn(ticks):\n\t {0}", spawnStats.ToString());
@@ -173,7 +186,7 @@ namespace ConcucrrencyTiming
 
         static void clockCalibrationTest(int numIter)
         {
-            Console.WriteLine("\nBeginning Clock Calibration..");
+            
             ConcurrencyTester syscal = new ConcurrencyTester(numIter);
             syscal.calibrateClock();
             Console.WriteLine();

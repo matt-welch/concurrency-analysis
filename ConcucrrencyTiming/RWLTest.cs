@@ -28,23 +28,26 @@ namespace ConcucrrencyTiming
         // ReaderWriterLock is just an integer. 
         static int resource = 0;
         static Random rnd = new Random();
-        int numThreads = 10;
-        int iterations = 1;
+        int _numThreads = 10;
+
         public static int readTimeout = 100;
         public static int writeTimeout = 100;
+        public static bool verboseOutput = false;
 
         public RWLTest(int iter)
         {
             resultsRead = new List<long>();
             resultsWrite = new List<long>();
 
-            this.iterations = iter;
+
         }
         public void run()
         {
-            Console.WriteLine("Beginning ReaderWriterLock Timing Test");
-            Thread[] t = new Thread[numThreads];
-            for (int i = 0; i < numThreads; i++)
+            string testName = "ReaderWriterLock Timing Test";
+            Console.WriteLine("\nBeginning {0} ({1} reps, max {2} threads)",
+                testName, 1000, _numThreads);
+            Thread[] t = new Thread[_numThreads];
+            for (int i = 0; i < _numThreads; i++)
             {
                 t[i] = new Thread(new ThreadStart(ThreadProc));
                 t[i].Name = new String(Convert.ToChar(i + 65), 1);
@@ -56,19 +59,67 @@ namespace ConcucrrencyTiming
             // Tell the tws to shut down, then wait until they all 
             // finish.
             running = false;
-            for (int i = 0; i < numThreads; i++)
+            for (int i = 0; i < _numThreads; i++)
             {
                 t[i].Join();
             }
 
             // Display statistics.
-            Console.WriteLine("{0} reads, {1} writes, {2} reader time-outs, {3} writer time-outs.",
-                readInt, writeInt, readerTimeouts, writerTimeouts);
+            Stats readStats = new Stats(resultsRead.ToArray());
+            Stats writeStats = new Stats(resultsWrite.ToArray()); 
+            if (verboseOutput)
+            {
+                Console.WriteLine("{0} reads, {1} writes, {2} reader time-outs, {3} writer time-outs.",
+                    readInt, writeInt, readerTimeouts, writerTimeouts);
+                Console.WriteLine("Read timing:\n\t {0}", readStats.ToString());
+                Console.WriteLine("Write timing:\n\t {0}", writeStats.ToString());
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("Read,{0},{1}", _numThreads, readStats.ToCSV());
+                Console.WriteLine("Write,{0},{1}", _numThreads, writeStats.ToCSV());
+            }
+        }
+        public void runMultipleThread()
+        {
+            string testName = "ReaderWriterLock Timing Test";
+            Console.WriteLine("\nBeginning {0} ({1} reps, max {2} threads)",
+                testName, 1000, _numThreads);
+            Thread[] t = new Thread[_numThreads];
+            for (int i = 0; i < _numThreads; i++)
+            {
+                t[i] = new Thread(new ThreadStart(ThreadProc));
+                t[i].Name = new String(Convert.ToChar(i + 65), 1);
+                t[i].Start();
+
+            }
+            Thread.Sleep(1000);
+
+            // Tell the tws to shut down, then wait until they all 
+            // finish.
+            running = false;
+            for (int i = 0; i < _numThreads; i++)
+            {
+                t[i].Join();
+            }
+
+            // Display statistics.
             Stats readStats = new Stats(resultsRead.ToArray());
             Stats writeStats = new Stats(resultsWrite.ToArray());
-            Console.WriteLine("Read timing:\n\t {0}", readStats.ToString());
-            Console.WriteLine("Write timing:\n\t {0}", writeStats.ToString());
-            Console.WriteLine();
+            if (verboseOutput)
+            {
+                Console.WriteLine("{0} reads, {1} writes, {2} reader time-outs, {3} writer time-outs.",
+                    readInt, writeInt, readerTimeouts, writerTimeouts);
+                Console.WriteLine("Read timing:\n\t {0}", readStats.ToString());
+                Console.WriteLine("Write timing:\n\t {0}", writeStats.ToString());
+                Console.WriteLine();
+            }
+            else
+            {
+                Console.WriteLine("Read,{0},{1}", _numThreads, readStats.ToCSV());
+                Console.WriteLine("Write,{0},{1}", _numThreads, writeStats.ToCSV());
+            }
         }
         static void ThreadProc()
         {

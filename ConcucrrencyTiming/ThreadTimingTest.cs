@@ -19,6 +19,7 @@ namespace ConcucrrencyTiming
         public static List<long> sharedCreateResults;
         public static List<long> sharedStartResults;
         public static List<long> sharedStopResults;
+        public static bool verboseOutput = false;
 
         public void run(int iter)
         {
@@ -42,27 +43,30 @@ namespace ConcucrrencyTiming
                 sharedStartResults.Add(sharedClock.ElapsedTicks);
             }
 
-            Stats spawnStats = new Stats(sharedCreateResults.ToArray());
+            Stats startStats = new Stats(sharedCreateResults.ToArray());
             string filename = "ThreadCreate.txt";
             FileWriter writer = new FileWriter(filename, sharedCreateResults);
             Stats joinStats = new Stats(sharedStartResults.ToArray());
-            filename = "ThreadSpawn.txt";
+            filename = "ThreadStart.txt";
             writer = new FileWriter(filename, sharedStartResults);
             Stats createStats = new Stats(sharedStopResults.ToArray());
             filename = "ThreadJoin.txt";
             writer = new FileWriter(filename, sharedStopResults);
 
             Console.WriteLine("Thread Create(ticks):\n\t {0}", createStats.ToString());
-            Console.WriteLine("Thread Spawn(ticks):\n\t {0}", spawnStats.ToString());
+            Console.WriteLine("Thread Start(ticks):\n\t {0}", startStats.ToString());
             Console.WriteLine("Thread Join (ticks):\n\t {0}", joinStats.ToString());
+            Console.WriteLine("Create,{0}", createStats.ToCSV());
+            Console.WriteLine("Start,{0}", startStats.ToCSV());
+            Console.WriteLine("Join,{0}", joinStats.ToCSV());
             Console.WriteLine();
         }
         static void simpleTimerThread()
         {
             sharedClock.Stop();
             sharedCreateResults.Add(sharedClock.ElapsedTicks);
-            //Console.WriteLine("Thread spawn time = {0} ticks", readClock.ElapsedTicks);
-            // store the spawn timing data here
+            //Console.WriteLine("Thread Start time = {0} ticks", readClock.ElapsedTicks);
+            // store the Start timing data here
             sharedClock.Restart();
         }
 
@@ -93,19 +97,13 @@ namespace ConcucrrencyTiming
                     clockArray[i].Stop();
                     sharedStartResults.Add(clockArray[i].ElapsedTicks);
                 }
-                Stats spawnStats = new Stats(sharedCreateResults.ToArray());
-                string filename = "ThreadCreate.txt";
-                FileWriter writer = new FileWriter(filename, sharedCreateResults);
+                Stats startStats = new Stats(sharedCreateResults.ToArray());
                 Stats joinStats = new Stats(sharedStartResults.ToArray());
-                filename = "ThreadSpawn.txt";
-                writer = new FileWriter(filename, sharedStartResults);
                 Stats createStats = new Stats(sharedStopResults.ToArray());
-                filename = "ThreadJoin.txt";
-                writer = new FileWriter(filename, sharedStopResults);
 
-                Console.WriteLine("Thread Create(ticks):\n\t {0}", createStats.ToString());
-                Console.WriteLine("Thread Spawn(ticks):\n\t {0}", spawnStats.ToString());
-                Console.WriteLine("Thread Join (ticks):\n\t {0}", joinStats.ToString());
+                Console.WriteLine("Create,{0}", createStats.ToCSV());
+                Console.WriteLine("Start,{0}", startStats.ToCSV());
+                Console.WriteLine("Join,{0}", joinStats.ToCSV());
                 Console.WriteLine();
             }
                 
@@ -113,7 +111,11 @@ namespace ConcucrrencyTiming
 
         public void runMultiStatefulThreads(int maxThreads, int numReps)
         {
-            Console.WriteLine("Beginning Stateful MultiThread Timing Test (create, start, join)");
+            string testName = "Stateful MultiThread Timing Test";
+            Console.WriteLine("\nBeginning {0} ({1} reps, max {2} threads)",
+               testName, numReps, maxThreads);
+            Console.WriteLine("Type,#T,count,min,mean,median,std,max");
+
             for (int i = 0; i < maxThreads; i++)
             {
                 // initialize results lists
@@ -121,7 +123,7 @@ namespace ConcucrrencyTiming
                 sharedStartResults = new List<long>();// thread.start
                 sharedStopResults = new List<long>();// thread.join
                 int maxThreadsCurrent = i + 1;
-                Console.WriteLine("Number of Threads = {0}", maxThreadsCurrent);
+                //Console.WriteLine("Number of Threads = {0}", numThreads);
                 statefulThread[] tws = new statefulThread[maxThreadsCurrent];
                 Thread[] threads = new Thread[maxThreadsCurrent];
 
@@ -162,10 +164,20 @@ namespace ConcucrrencyTiming
                 Stats startStats = new Stats(sharedStartResults.ToArray());
                 Stats joinStats = new Stats(sharedStopResults.ToArray());
 
-                Console.WriteLine("Thread Create(ticks) N={1}:\n\t {0}", createStats.ToString(), maxThreadsCurrent);
-                Console.WriteLine("Thread Spawn(ticks) N={1}:\n\t {0}", startStats.ToString(), maxThreadsCurrent);
-                Console.WriteLine("Thread Join (ticks) N={1}:\n\t {0}", joinStats.ToString(), maxThreadsCurrent);
-                Console.WriteLine();
+                if (verboseOutput)
+                {
+                    Console.WriteLine("Thread Create(ticks) N={1}:\n\t {0}", createStats.ToString(), maxThreadsCurrent);
+                    Console.WriteLine("Thread Start(ticks) N={1}:\n\t {0}", startStats.ToString(), maxThreadsCurrent);
+                    Console.WriteLine("Thread Join (ticks) N={1}:\n\t {0}", joinStats.ToString(), maxThreadsCurrent);
+                    Console.WriteLine();
+                }
+                else
+                {
+                    Console.WriteLine("Create,{1},{0}", createStats.ToCSV(), maxThreadsCurrent);
+                    Console.WriteLine("Start,{1},{0}", startStats.ToCSV(), maxThreadsCurrent);
+                    Console.WriteLine("Join,{1},{0}", joinStats.ToCSV(), maxThreadsCurrent);
+                }
+
             }
         }
 
@@ -174,8 +186,8 @@ namespace ConcucrrencyTiming
 
             sharedClock.Stop();
             sharedCreateResults.Add(sharedClock.ElapsedTicks);
-            //Console.WriteLine("Thread spawn time = {0} ticks", readClock.ElapsedTicks);
-            // store the spawn timing data here
+            //Console.WriteLine("Thread Start time = {0} ticks", readClock.ElapsedTicks);
+            // store the Start timing data here
             sharedClock.Restart();
         }
         public class statefulThread

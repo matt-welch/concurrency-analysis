@@ -17,10 +17,9 @@ namespace ConcucrrencyTiming
         static int _numThreads;
         static Mutex mutex;
         static Mutex exitDataMutex;
-        int _initSemCount;
-        int _maxSemCount;
         public static List<long> enterData;
         public static List<long> exitData;
+        public static bool verboseOutput = false;
 
         public MutexTest(int numThreads)
         {
@@ -40,12 +39,14 @@ namespace ConcucrrencyTiming
         }
         public void runReps(int numReps, int maxThreads)
         {
-            Console.WriteLine("\nBeginning Mutex Timing Test ({0} reps, max {1} threads",
-                numReps, maxThreads);    
+            string testName = "Mutex Timing Test";
+            Console.WriteLine("\nBeginning {0} ({1} reps, max {2} threads)",
+               testName, numReps, maxThreads);
+            Console.WriteLine("Type,#T,count,min,mean,median,std,max");
             for (int j = 1; j <= maxThreads; j++)
             {
                 _numThreads = j;
-                Console.WriteLine("\nMutex test with {0} threads ({1} reps): ", j, numReps);
+                //Console.WriteLine("\nMutex test with {0} threads ({1} reps): ", j, numReps);
                 
                 enterData = new List<long>();
                 exitData = new List<long>();
@@ -53,16 +54,24 @@ namespace ConcucrrencyTiming
                 {
                     run();
                 }
-
-                string datafileExtension = ".txt";
-                string filename = "MutexEnter_T" + String.Format("{0:00}", _numThreads) + datafileExtension; 
-                FileWriter writer = new FileWriter(filename, enterData);
-                filename = "MutexExit_T" + String.Format("{0:00}", _numThreads) + datafileExtension;
-                writer = new FileWriter(filename, exitData);
                 Stats enterStats = new Stats(enterData.ToArray());
-                Console.WriteLine("MutexEnter_T{0:00}:\n\t{1}", _numThreads, enterStats.ToString());
                 Stats exitStats = new Stats(exitData.ToArray());
-                Console.WriteLine("MutexExit_T{0:00}:\n\t{1}", _numThreads, exitStats.ToString());
+
+                if (verboseOutput)
+                {
+                    string datafileExtension = ".txt";
+                    string filename = "MutexEnter_T" + String.Format("{0:00}", _numThreads) + datafileExtension;
+                    FileWriter writer = new FileWriter(filename, enterData);
+                    filename = "MutexExit_T" + String.Format("{0:00}", _numThreads) + datafileExtension;
+                    writer = new FileWriter(filename, exitData);
+                    Console.WriteLine("MutexEnter_T{0:00}:\n\t{1}", _numThreads, enterStats.ToString());
+                    Console.WriteLine("MutexExit_T{0:00}:\n\t{1}", _numThreads, exitStats.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("Enter,{0},{1}", _numThreads, enterStats.ToCSV());
+                    Console.WriteLine("Exit,{0},{1}", _numThreads, exitStats.ToCSV());
+                }
             }           
         }
 

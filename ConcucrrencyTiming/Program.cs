@@ -45,7 +45,7 @@ namespace ConcucrrencyTiming
         public void calibrateClock()
         {
             int ms = 1000;
-            Console.WriteLine("\nBeginning Clock Calibration (sleep for {0} ms", ms);
+            Console.WriteLine("\nBeginning Clock Calibration (sleep for {0} ms * {1} reps)", ms, iterations);
             testClock("ticks", ms);
             Stats msStats = new Stats(resultsMs);
             Stats ticksStats = new Stats(resultsTicks);
@@ -62,7 +62,11 @@ namespace ConcucrrencyTiming
             for (int i = 0; i < iterations; i++){
                 clock.Start();
                 {
-                    Thread.Sleep(msSleep); 
+                    long a = 0;
+                    while(a < 1000000000)
+                    {
+                        a += 1;
+                    } 
                 }
                 clock.Stop();
                 resultsTicks[i] = clock.ElapsedTicks;
@@ -112,31 +116,40 @@ namespace ConcucrrencyTiming
             // TODO: compare to single threaded performance (inside a VM with 1-6 cores for scaling?)
             Console.WriteLine("Concurrency utilities timing program:");
             
+            clockCalibrationTest(100);
+
             int numIter = 20;
+            int numReps = 1000;
+            int maxThreads = 10;
+
             timerUnits = "ticks";
             
             Console.WriteLine();
             clockOverheadTest();
 
-            ThreadTimingTest threadTest = new ThreadTimingTest();
-            threadTest.run(1000);
-
-            threadTest.runMultiStatefulThreads(10, 1000);
-
             //threadSpawnTest(1000);
-            RWLTest rwlTest = new RWLTest(numIter);
+            //RWLTest rwlTest = new RWLTest(numReps);
+            //rwlTest.run();
 
-            rwlTest.run();
-            int numReps = 1000;
-            int maxThreads = 10;
+            // RWL stateful Threads test
+            RWLStatefulTest rwlMultiTest = new RWLStatefulTest();
+            rwlMultiTest.runRWLStatefulTest(maxThreads, 2); // don't need reps, built into test
+            Console.WriteLine();
+
+            ThreadTimingTest threadTest = new ThreadTimingTest();
+            //threadTest.run(1000);
+
+            threadTest.runMultiStatefulThreads(maxThreads, numReps);
+
+
             SemaphoreTest semTest = new SemaphoreTest(10, 3, 3);
             semTest.runReps(numReps, maxThreads);
             MutexTest mtxTest = new MutexTest(maxThreads);
             mtxTest.runReps(numReps, maxThreads);
                 
-            clockCalibrationTest(100);
+           
 
-            // clock test has a built-in readkey
+            // myClock test has a built-in readkey
             clockTest(numIter);
         }
 
@@ -160,18 +173,18 @@ namespace ConcucrrencyTiming
                 resultsB.Add(sharedClock.ElapsedTicks);
             }
             
-            Stats spawnStats = new Stats(resultsA.ToArray());
+            Stats startStats = new Stats(resultsA.ToArray());
             string filename = "ThreadCreate.txt";
             FileWriter writer = new FileWriter(filename, resultsA);
             Stats joinStats = new Stats(resultsB.ToArray());
-            filename = "ThreadSpawn.txt";
+            filename = "ThreadStart.txt";
             writer = new FileWriter(filename, resultsB); 
             Stats createStats = new Stats(resultsC.ToArray());
             filename = "ThreadJoin.txt";
             writer = new FileWriter(filename, resultsC); 
 
             Console.WriteLine("Thread Create(ticks):\n\t {0}", createStats.ToString());
-            Console.WriteLine("Thread Spawn(ticks):\n\t {0}", spawnStats.ToString());
+            Console.WriteLine("Thread Start(ticks):\n\t {0}", startStats.ToString());
             Console.WriteLine("Thread Join (ticks):\n\t {0}", joinStats.ToString());
             Console.WriteLine();
         }
@@ -179,8 +192,8 @@ namespace ConcucrrencyTiming
         {
             sharedClock.Stop();
             resultsA.Add(sharedClock.ElapsedTicks);
-            //Console.WriteLine("Thread spawn time = {0} ticks", readClock.ElapsedTicks);
-            // store the spawn timing data here
+            //Console.WriteLine("Thread Start time = {0} ticks", readClock.ElapsedTicks);
+            // store the start timing data here
             sharedClock.Restart();
         }
 
@@ -204,7 +217,7 @@ namespace ConcucrrencyTiming
                 //    numIter = Convert.ToInt32(iter);
                 //else
                 //    return;
-                Console.WriteLine("Beginning clock test...");
+                Console.WriteLine("Beginning myClock test...");
                 Stopwatch mainClock = new Stopwatch();
                 ConcurrencyTester tester = new ConcurrencyTester(numIter);
                 mainClock.Start();

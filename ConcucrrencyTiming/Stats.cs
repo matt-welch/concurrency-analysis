@@ -50,5 +50,17 @@ namespace ConcucrrencyTiming
             }
             return output;
         }
+        public string ToCSV()
+        {
+            string output = "Statistics are not yet valid.  Initialize with Stats(long[]).";
+            if (validStats)
+            {
+                //output = "count,min,mean,median,std,max\n";
+                output = String.Format("{0},{1},{2:0.00},{3},{4:0.00},{5}",
+                    count, min, mean, med, std, max);
+            }
+            return output;
+        }
+
     }
 }

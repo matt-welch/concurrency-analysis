@@ -45,6 +45,7 @@
     <Compile Include="MutexTest.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="RWLStatefulTest .cs" />
     <Compile Include="RWLTest.cs" />
     <Compile Include="SemaphoreTest.cs" />
     <Compile Include="Stats.cs" />

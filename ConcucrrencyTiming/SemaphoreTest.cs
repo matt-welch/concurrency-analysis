@@ -25,6 +25,7 @@ namespace ConcucrrencyTiming
         int _maxSemCount;
         public static List<long> enterData;
         public static List<long> exitData;
+        public static bool verboseOutput = false;
 
         public SemaphoreTest(int numThreads, int param_initialCount, int param_maximumCount)
         {
@@ -46,12 +47,14 @@ namespace ConcucrrencyTiming
         }
         public void runReps(int numReps, int maxThreads)
         {
-            Console.WriteLine("\nBeginning Semaphore Timing Test ({0} reps, max {1} threads",
-               numReps, maxThreads);
+            string testName = "Semaphore Timing Test";
+            Console.WriteLine("\nBeginning {0} ({1} reps, max {2} threads)",
+               testName, numReps, maxThreads);
+            Console.WriteLine("Type,#T,count,min,mean,median,std,max");
             for (int j = 1; j <= maxThreads; j++)
             {
                 _numThreads = j;
-                Console.WriteLine("\nSemaphore test with {0} threads ({1} reps): ", j, numReps);
+                //Console.WriteLine("\nSemaphore test with {0} threads ({1} reps): ", j, numReps);
                 
                 enterData = new List<long>();
                 exitData = new List<long>();
@@ -60,15 +63,23 @@ namespace ConcucrrencyTiming
                     run();
                 }
 
-                string datafileExtension = ".txt";
-                string filename = "SemEnter_T" + String.Format("{0:00}", _numThreads) + datafileExtension; 
-                FileWriter writer = new FileWriter(filename, enterData);
-                filename = "SemExit_T" + String.Format("{0:00}", _numThreads) + datafileExtension;
-                writer = new FileWriter(filename, exitData);
                 Stats enterStats = new Stats(enterData.ToArray());
-                Console.WriteLine("SemEnter_T{0:00}:\n\t{1}", _numThreads, enterStats.ToString());
                 Stats exitStats = new Stats(exitData.ToArray());
-                Console.WriteLine("SemExit_T{0:00}:\n\t{1}", _numThreads, exitStats.ToString());
+                if (verboseOutput)
+                {
+                    string datafileExtension = ".txt";
+                    string filename = "SemEnter_T" + String.Format("{0:00}", _numThreads) + datafileExtension;
+                    FileWriter writer = new FileWriter(filename, enterData);
+                    filename = "SemExit_T" + String.Format("{0:00}", _numThreads) + datafileExtension;
+                    writer = new FileWriter(filename, exitData);
+                    Console.WriteLine("SemEnter_T{0:00}:\n\t{1}", _numThreads, enterStats.ToString());
+                    Console.WriteLine("SemExit_T{0:00}:\n\t{1}", _numThreads, exitStats.ToString());
+                }
+                else
+                {
+                    Console.WriteLine("Enter,{0},{1}", _numThreads, enterStats.ToCSV());
+                    Console.WriteLine("Exit,{0},{1}", _numThreads, exitStats.ToCSV());
+                }
             }           
         }
 
@@ -96,7 +107,7 @@ namespace ConcucrrencyTiming
             sem.WaitOne();
             clock.Stop();
             enterData.Add(clock.ElapsedTicks);
-            //Console.WriteLine("{0} enters the semaphore test after {1} ticks", Thread.CurrentThread.Name, clock.ElapsedTicks);
+            //Console.WriteLine("{0} enters the semaphore test after {1} ticks", Thread.CurrentThread.Name, myClock.ElapsedTicks);
             //Console.WriteLine("{0} is leaving the semaphore test", Thread.CurrentThread.Name);
             clock.Restart();
             sem.Release();
@@ -105,7 +116,7 @@ namespace ConcucrrencyTiming
             exitData.Add(clock.ElapsedTicks);
             exitDataMutex.Release();
             
-            //Console.WriteLine("{0} waited for {1} ticks", Thread.CurrentThread.Name, clock.ElapsedTicks);
+            //Console.WriteLine("{0} waited for {1} ticks", Thread.CurrentThread.Name, myClock.ElapsedTicks);
         }
     }
 }
